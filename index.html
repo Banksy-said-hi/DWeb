@@ -3,7 +3,7 @@
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
   :root{
     --bg:#0f1413;--panel:#161d1b;--panel2:#1c2522;--line:#2a3531;
-    --ink:#e8efe9;--dim:#8aa097;
+    --ink:#f2f7f3;--dim:#9fb3aa;
     --big:#f2c14e;--small:#6fb1c9;--pfand:#e07a5f;
     --good:#7bc47f;--avg:#e3b341;--bad:#e06c75;--accent:#2f6f5e;
     --pool:#5bb5c4;--terrace:#9ccb6a;--beer:#e0a44e;
@@ -50,16 +50,18 @@
   .kpi .v{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-top:6px}
   .kpi .u{font-size:12px;color:var(--dim)}
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th,td{text-align:right;padding:10px 10px;border-bottom:1px solid var(--line)}
   th:first-child,td:first-child{text-align:left}
-  th{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim)}
+  td{color:#ffffff;font-weight:500}
+  tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
+  th{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:#aebfb6}
   td.mono,th.mono{font-family:'IBM Plex Mono',monospace}
   .pill{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
   .pb{background:var(--big)}.ps{background:var(--small)}.pp{background:var(--pfand)}
   .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
   .d-pool{background:var(--pool)}.d-terrace{background:var(--terrace)}.d-beer{background:var(--beer)}
   tr.tot td{font-weight:600;border-top:2px solid var(--line);border-bottom:none}
-  .in{color:var(--good)}.out{color:var(--pfand)}
+  .in{color:#8ed98f;font-weight:600}.out{color:#f0917a;font-weight:600}
   .note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
   .sectitle{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:6px 0 12px}
   .concl{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
