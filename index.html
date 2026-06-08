@@ -6,13 +6,12 @@
     --ink:#f2f7f3;--dim:#9fb3aa;
     --big:#f2c14e;--small:#6fb1c9;--pfand:#e07a5f;
     --good:#7bc47f;--avg:#e3b341;--bad:#e06c75;--accent:#2f6f5e;
-    --pool:#5bb5c4;--terrace:#9ccb6a;--beer:#e0a44e;
   }
   *{box-sizing:border-box}
   #root{font-family:'IBM Plex Sans',sans-serif;
     background:radial-gradient(1200px 600px at 80% -10%, rgba(47,111,94,.18), transparent 60%),var(--bg);
     color:var(--ink);min-height:100vh;padding:28px 22px 60px;line-height:1.45}
-  .wrap{max-width:1240px;margin:0 auto}
+  .wrap{max-width:1100px;margin:0 auto}
   h1{font-family:'Fraunces',serif;font-weight:600;font-size:30px;letter-spacing:-.5px;margin:0 0 2px}
   .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
   .grid{display:grid;grid-template-columns:360px 1fr;gap:20px}
@@ -27,13 +26,13 @@
   .seg{display:flex;gap:5px;margin-bottom:4px;flex-wrap:wrap}
   .seg button{flex:1 1 0;min-width:58px;background:var(--panel2);border:1px solid var(--line);color:var(--dim);
     font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:7px 4px;border-radius:7px;cursor:pointer;transition:.15s}
+  .seg button.on.good{background:var(--good);border-color:var(--good);color:#0f1413}
+  .seg button.on.avg{background:var(--avg);border-color:var(--avg);color:#0f1413}
+  .seg button.on.bad{background:var(--bad);border-color:var(--bad);color:#0f1413}
   .manrow{display:flex;align-items:center;gap:6px;margin-top:6px}
   .manrow input{background:var(--panel2);border:1px solid var(--accent);color:var(--ink);border-radius:6px;
     padding:6px 8px;width:80px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px}
   .manrow span{font-family:'IBM Plex Mono',monospace;color:var(--dim);font-size:13px}
-  .seg button.on.good{background:var(--good);border-color:var(--good);color:#0f1413}
-  .seg button.on.avg{background:var(--avg);border-color:var(--avg);color:#0f1413}
-  .seg button.on.bad{background:var(--bad);border-color:var(--bad);color:#0f1413}
   .scrow{margin-bottom:14px}
   .scrow .nm{font-size:13px;margin-bottom:5px;display:flex;justify-content:space-between}
   .scrow .nm small{color:var(--dim);font-family:'IBM Plex Mono',monospace}
@@ -41,28 +40,35 @@
   .mix span{font-size:13px}
   .mix input{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:6px;
     padding:5px;width:100%;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px}
-  .warn{color:var(--bad);font-size:12px;margin-top:2px;min-height:14px}
-  .ok{color:var(--good)}
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:4px}
+  .note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
+  .fml{margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7}
+  .fml .row{display:flex;gap:8px;color:var(--ink)}
+  .fml .row b{color:var(--dim);font-weight:600;min-width:104px;display:inline-block}
+  .fml .eq{color:#9fc7b8}
+  details.what{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  details.what summary{cursor:pointer;font-size:12px;color:var(--accent);font-family:'IBM Plex Mono',monospace;letter-spacing:.3px;list-style:none}
+  details.what summary::-webkit-details-marker{display:none}
+  details.what summary::before{content:'▸ ';color:var(--accent)}
+  details.what[open] summary::before{content:'▾ '}
+  details.what .body{font-size:12px;color:var(--dim);line-height:1.55;margin-top:8px}
+  details.what .body p{margin:0 0 7px}
+  .scrow details.what,label.field+details.what{border-top:none;padding-top:4px;margin-top:6px}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
   @media(max-width:760px){.kpis{grid-template-columns:1fr}}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
   .kpi .t{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
   .kpi .v{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-top:6px}
   .kpi .u{font-size:12px;color:var(--dim)}
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:right;padding:10px 10px;border-bottom:1px solid var(--line)}
+  th,td{text-align:right;padding:10px;border-bottom:1px solid var(--line)}
   th:first-child,td:first-child{text-align:left}
-  td{color:#ffffff;font-weight:500}
+  td{color:#fff;font-weight:500}
   tbody tr:nth-child(even) td{background:rgba(255,255,255,.035)}
   th{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:#aebfb6}
   td.mono,th.mono{font-family:'IBM Plex Mono',monospace}
   .pill{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
   .pb{background:var(--big)}.ps{background:var(--small)}.pp{background:var(--pfand)}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
-  .d-pool{background:var(--pool)}.d-terrace{background:var(--terrace)}.d-beer{background:var(--beer)}
   tr.tot td{font-weight:600;border-top:2px solid var(--line);border-bottom:none}
-  .in{color:#8ed98f;font-weight:600}.out{color:#f0917a;font-weight:600}
-  .note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
   .sectitle{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:6px 0 12px}
   .concl{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   @media(max-width:760px){.concl{grid-template-columns:1fr}}
@@ -78,66 +84,42 @@ const root=document.getElementById('root');
 
 const state={
   gMin:500,gMax:700,
-  sc:{redeem:'avg',ret:'avg',inflight:'avg'},
-  manual:{redeem:85,ret:80,inflight:30},
+  sc:{ret:'avg',inflight:'avg'},
+  manual:{ret:80,inflight:30},
   buffer:15,
   avgPrice:4.53,
   itemsPerGuest:8,
-  bars:{
-    pool:{share:55,bottle:65,name:'Pool Bar'},
-    terrace:{share:25,bottle:55,name:'Terrace Bar'},
-    beer:{share:20,bottle:95,name:'Beer Bar'},
-  },
+  bottleShare:70,   // single overall bottle-vs-cup %
+  bigValueShare:85, // % of cash value dispensed as Big tokens (rest as Small)
 };
 const VAL={
-  redeem:{good:0.92,avg:0.85,bad:0.72},
   ret:{good:0.95,avg:0.80,bad:0.60},
   inflight:{good:0.18,avg:0.30,bad:0.45},
 };
-// effective rate (0-1) for a variable: manual override if selected, else preset
-function rate(varKey){
-  if(state.sc[varKey]==='man') return Math.min(100,Math.max(0,+state.manual[varKey]||0))/100;
-  return VAL[varKey][state.sc[varKey]];
+function rate(k){
+  if(state.sc[k]==='man') return Math.min(100,Math.max(0,+state.manual[k]||0))/100;
+  return VAL[k][state.sc[k]];
 }
 const BIG=2.00,SMALL=0.50,PFANDV=1.00;
-const PRICE_BOTTLE=4.30,PRICE_CUP=5.20;
 
-// Demand-driven: total drinks = itemsPerGuest * guests. Spend = drinks * avgPrice.
-// Cash loaded at Info Desk = spend / redemption (guests buy more tokens than they spend).
-function eventDrinks(g){return state.itemsPerGuest*g;}
-
-function computeBar(barKey,g){
-  const b=state.bars[barKey];
-  const ret=rate('ret'), inflight=rate('inflight');
-  const barDrinks=eventDrinks(g)*(b.share/100);
-  const bShare=b.bottle/100;
-  const bottleDrinks=Math.round(barDrinks*bShare);
-  const cupDrinks=Math.round(barDrinks*(1-bShare));
-  const spent=barDrinks*state.avgPrice;
-  const pfandOut=bottleDrinks;
-  const pfandReturned=Math.round(bottleDrinks*ret);
-  const pfandPeak=Math.ceil(bottleDrinks*inflight);
-  const smallRefund=pfandReturned*2;
-  return {spent,bottleDrinks,cupDrinks,total:bottleDrinks+cupDrinks,pfandOut,pfandReturned,pfandPeak,smallRefund};
-}
-function computeAll(g){
-  const r={pool:computeBar('pool',g),terrace:computeBar('terrace',g),beer:computeBar('beer',g)};
-  const redeem=rate('redeem');
-  const spent=r.pool.spent+r.terrace.spent+r.beer.spent;     // token value actually spent on drinks
-  const loaded=redeem>0 ? spent/redeem : spent;              // cash loaded at Info Desk (guests buy more than they spend)
-  const valueBig=loaded*0.85, valueSmall=loaded*0.15;
-  r.bigTokens=Math.round(valueBig/BIG); r.smallTokens=Math.round(valueSmall/SMALL);
-  r.loaded=loaded; r.spent=spent;
-  r.pfandPeakTotal=r.pool.pfandPeak+r.terrace.pfandPeak+r.beer.pfandPeak;
-  r.totalDrinks=r.pool.total+r.terrace.total+r.beer.total;
-  r.pfandOutTotal=r.pool.pfandOut+r.terrace.pfandOut+r.beer.pfandOut;
-  r.pfandRetTotal=r.pool.pfandReturned+r.terrace.pfandReturned+r.beer.pfandReturned;
-  r.smallRefundTotal=r.pool.smallRefund+r.terrace.smallRefund+r.beer.smallRefund;
-  return r;
+function compute(g){
+  const inflight=rate('inflight');
+  const drinks=state.itemsPerGuest*g;
+  const bottle=Math.round(drinks*state.bottleShare/100);
+  const cup=drinks-bottle;
+  const spend=drinks*state.avgPrice;            // cash inflow (no redemption gross-up)
+  const pfandPeak=Math.ceil(bottle*inflight);   // tokens to own = peak in-flight
+  const bs=state.bigValueShare/100;
+  const bigTokens=Math.round(spend*bs/BIG);
+  const smallTokens=Math.round(spend*(1-bs)/SMALL);
+  return {drinks,bottle,cup,spend,pfandPeak,bigTokens,smallTokens};
 }
 const fmt=n=>Math.round(n).toLocaleString('de-DE');
 const eur=n=>'€'+Math.round(n).toLocaleString('de-DE');
 
+function wh(text){
+  return `<details class="what"><summary>What is this?</summary><div class="body"><p>${text}</p></div></details>`;
+}
 function segHTML(varKey){
   const cur=state.sc[varKey];
   const btns=['good','avg','bad','man'].map(k=>{
@@ -152,17 +134,12 @@ function segHTML(varKey){
 }
 
 function render(){
-  const hi=computeAll(state.gMax), lo=computeAll(state.gMin);
-  const gMed=Math.round((state.gMin+state.gMax)/2);
-  const md=computeAll(gMed);
-  const mdBottles=md.pool.bottleDrinks+md.terrace.bottleDrinks+md.beer.bottleDrinks;
-  const hiBottles=hi.pool.bottleDrinks+hi.terrace.bottleDrinks+hi.beer.bottleDrinks;
-  const loBottles=lo.pool.bottleDrinks+lo.terrace.bottleDrinks+lo.beer.bottleDrinks;
-  const barShareSum=state.bars.pool.share+state.bars.terrace.share+state.bars.beer.share;
+  const lo=compute(state.gMin), hi=compute(state.gMax);
+  const buf=k=>Math.ceil(k*(1+state.buffer/100));
 
   root.innerHTML=`<div class="wrap">
-    <h1>Token Circulation Simulator</h1>
-    <div class="sub">DWeb Camp 2026 · per-bar drink volumes, Pfand circulation &amp; token order quantities — Pool / Terrace / Beer</div>
+    <h1>Token Order Simulator</h1>
+    <div class="sub">DWeb Camp 2026 · how many of each token to order — Big, Small, Pfand (all bars combined)</div>
     <div class="grid">
       <div>
         <div class="card">
@@ -171,67 +148,45 @@ function render(){
             <input type="range" min="200" max="900" step="10" value="${state.gMin}" id="gMin"></label>
           <label class="field"><div class="lab"><span>Maximum</span><b>${state.gMax}</b></div>
             <input type="range" min="200" max="900" step="10" value="${state.gMax}" id="gMax"></label>
-        </div>
-
-        <div class="card">
-          <h2>Scenario variables (independent)</h2>
-          <div class="scrow"><div class="nm"><span>Redemption rate</span><small>${(rate('redeem')*100)|0}%</small></div>${segHTML('redeem')}</div>
-          <div class="scrow"><div class="nm"><span>Pfand return rate</span><small>${(rate('ret')*100)|0}%</small></div>${segHTML('ret')}</div>
-          <div class="scrow"><div class="nm"><span>Peak bottles in-flight</span><small>${(rate('inflight')*100)|0}%</small></div>${segHTML('inflight')}</div>
-          <div class="note">Each runs independently — e.g. good redemption with bad returns.</div>
+          ${wh('Expected attendance range for the camp. Every result is shown across this range; order quantities use the maximum, so you provision for the busiest realistic turnout.')}
         </div>
 
         <div class="card">
           <h2>Demand</h2>
           <label class="field"><div class="lab"><span>Items per guest (whole event)</span><b>${state.itemsPerGuest}</b></div>
             <input type="range" min="1" max="25" step="1" value="${state.itemsPerGuest}" id="ipg"></label>
-          <div class="mix" style="margin-top:4px"><span>Avg item price €</span><input type="number" step="0.01" id="avgPrice" value="${state.avgPrice}"></div>
-          <div class="note">Default €4.53 = plain average of the 19 menu items (new prices). Total drinks = items/guest × guests.</div>
+          ${wh('Average number of drinks one guest buys across the entire event (all days combined). Total drinks = items/guest × guests. This is the main demand lever — raise it and everything scales up.')}
+          <div class="mix" style="margin-top:8px"><span>Avg item price €</span><input type="number" step="0.01" id="avgPrice" value="${state.avgPrice}"></div>
+          ${wh('Average price of one menu item. Default €4.53 is the plain average of all 19 menu items at current prices. Drives cash inflow = drinks × this price.')}
+          <label class="field" style="margin-top:8px"><div class="lab"><span>Bottle drinks share</span><b>${state.bottleShare}%</b></div>
+            <input type="range" min="0" max="100" step="5" value="${state.bottleShare}" id="bottleShare"></label>
+          ${wh('Of all drinks sold, the share served in bottles (vs poured into cups). Only bottle drinks carry a Pfand deposit, so this sets how many Pfand tokens circulate.')}
+          <label class="field" style="margin-top:8px"><div class="lab"><span>Value dispensed as Big tokens</span><b>${state.bigValueShare}%</b></div>
+            <input type="range" min="50" max="100" step="5" value="${state.bigValueShare}" id="bigValueShare"></label>
+          ${wh('How you hand out token value at the Info Desk: the share given as €2 Big tokens vs €0.50 Small tokens. More Big = fewer pieces to print but less change flexibility; more Small = easier change but many more pieces.')}
         </div>
 
         <div class="card">
-          <h2>Per-bar volume &amp; bottle share</h2>
-          ${Object.entries(state.bars).map(([k,b])=>`
-            <label class="field"><div class="lab"><span><span class="dot d-${k}"></span>${b.name} — volume</span><b>${b.share}%</b></div>
-              <input type="range" min="0" max="100" step="5" value="${b.share}" data-bar="${k}" data-prop="share"></label>
-            <label class="field" style="margin-top:-6px"><div class="lab"><span style="color:var(--dim)">↳ bottle drinks</span><b>${b.bottle}%</b></div>
-              <input type="range" min="0" max="100" step="5" value="${b.bottle}" data-bar="${k}" data-prop="bottle"></label>
-          `).join('')}
-          <div class="warn ${barShareSum===100?'ok':''}">${barShareSum===100?'✓ shares sum to 100%':'⚠ shares sum to '+barShareSum+'%'}</div>
+          <h2>Scenario variables</h2>
+          <div class="scrow"><div class="nm"><span>Pfand return rate</span><small>${(rate('ret')*100)|0}%</small></div>${segHTML('ret')}
+            ${wh('Share of sold bottles guests bring back for the €1 refund. Unreturned deposits stay unclaimed (a bonus you keep). Drives the small-token refund load at the Return Station; informational for the order.')}</div>
+          <div class="scrow"><div class="nm"><span>Peak bottles in-flight</span><small>${(rate('inflight')*100)|0}%</small></div>${segHTML('inflight')}
+            ${wh('At the single busiest moment, the fraction of all sold bottles that are out at once (bought, not yet returned). This sizes the Pfand order — you only need enough tokens to cover that peak, since they cycle back through the Return Station and get reused.')}</div>
         </div>
 
         <div class="card">
           <h2>Order buffer</h2>
           <label class="field" style="margin-bottom:4px"><div class="lab"><span>Safety buffer on order qty</span><b>${state.buffer}%</b></div>
             <input type="range" min="0" max="50" step="1" value="${state.buffer}" id="buffer"></label>
-          <div class="note">Applied to all three token types in the order list below.</div>
+          ${wh('Extra margin added on top of every calculated quantity before ordering — covers miscounts, damaged tokens, and demand running hotter than modelled. Applied to all three token types.')}
         </div>
       </div>
 
       <div>
         <div class="kpis">
-          <div class="kpi"><div class="t">Cash inflow</div><div class="v">${eur(lo.loaded)}–${eur(hi.loaded)}</div><div class="u">spend ÷ redemption</div></div>
-          <div class="kpi"><div class="t">Drinks served</div><div class="v">${fmt(lo.totalDrinks)}–${fmt(hi.totalDrinks)}</div><div class="u">across 3 bars</div></div>
-          <div class="kpi"><div class="t">Bottles served</div><div class="v">${fmt(loBottles)}–${fmt(hiBottles)}</div><div class="u">1 Pfand token handed out each</div></div>
-        </div>
-
-        <div class="sectitle">Per-bar breakdown — median (${gMed} guests)</div>
-        <div class="card">
-          <table>
-            <thead><tr><th>Bar</th><th class="mono">Drinks</th><th class="mono">Bottle</th><th class="mono">Cup</th><th class="mono"><span class="pill pp"></span>Pfand out</th><th class="mono"><span class="pill pp"></span>Pfand to stock</th></tr></thead>
-            <tbody>
-              ${['pool','terrace','beer'].map(k=>{const c=md[k];return `<tr>
-                <td><span class="dot d-${k}"></span>${state.bars[k].name}</td>
-                <td class="mono">${fmt(c.total)}</td><td class="mono">${fmt(c.bottleDrinks)}</td><td class="mono">${fmt(c.cupDrinks)}</td>
-                <td class="mono out">${fmt(c.pfandOut)}</td><td class="mono">${fmt(c.pfandPeak)}</td></tr>`}).join('')}
-              <tr class="tot"><td>Total</td><td class="mono">${fmt(md.totalDrinks)}</td>
-                <td class="mono">${fmt(mdBottles)}</td>
-                <td class="mono">${fmt(md.pool.cupDrinks+md.terrace.cupDrinks+md.beer.cupDrinks)}</td>
-                <td class="mono out">${fmt(md.pfandOutTotal)}</td>
-                <td class="mono">${fmt(md.pfandPeakTotal)}</td></tr>
-            </tbody>
-          </table>
-          <div class="note"><b>Pfand to stock</b> = peak bottles in-flight per bar = how many Pfand tokens each bar starts with / keeps replenished from the Return Station. <b>Bottle column total (${fmt(mdBottles)})</b> = total bottles served at median.</div>
+          <div class="kpi"><div class="t">Cash inflow</div><div class="v">${eur(lo.spend)}–${eur(hi.spend)}</div><div class="u">= drinks × €${state.avgPrice.toFixed(2)}</div></div>
+          <div class="kpi"><div class="t">Drinks served</div><div class="v">${fmt(lo.drinks)}–${fmt(hi.drinks)}</div><div class="u">= ${state.itemsPerGuest} items × guests</div></div>
+          <div class="kpi"><div class="t">Bottles served</div><div class="v">${fmt(lo.bottle)}–${fmt(hi.bottle)}</div><div class="u">1 Pfand token handed out each</div></div>
         </div>
 
         <div class="sectitle">📦 Order list — what to buy (max guests, ${state.buffer}% buffer)</div>
@@ -239,41 +194,37 @@ function render(){
           <table>
             <thead><tr><th>Token</th><th class="mono">Unit</th><th class="mono">Base qty</th><th class="mono">+ Buffer</th><th class="mono">Order qty</th></tr></thead>
             <tbody>
-              ${[
-                ['Big','pb','€2.00',hi.bigTokens,BIG],
-                ['Small','ps','€0.50',hi.smallTokens,SMALL],
-                ['Pfand','pp','deposit',hi.pfandPeakTotal,PFANDV],
-              ].map(([nm,cls,unit,base,val])=>{
-                const buf=base*(state.buffer/100);
-                const order=Math.ceil(base+buf);
-                return `<tr>
-                  <td><span class="pill ${cls}"></span>${nm}</td>
-                  <td class="mono">${unit}</td>
-                  <td class="mono">${fmt(base)}</td>
-                  <td class="mono" style="color:var(--dim)">+${fmt(buf)}</td>
-                  <td class="mono" style="font-weight:600">${fmt(order)}</td>
-                </tr>`;
+              ${[['Big','pb','€2.00',hi.bigTokens],['Small','ps','€0.50',hi.smallTokens],['Pfand','pp','deposit',hi.pfandPeak]].map(([nm,cls,unit,base])=>{
+                const b=base*state.buffer/100, order=Math.ceil(base+b);
+                return `<tr><td><span class="pill ${cls}"></span>${nm}</td><td class="mono">${unit}</td>
+                  <td class="mono">${fmt(base)}</td><td class="mono" style="color:var(--dim)">+${fmt(b)}</td>
+                  <td class="mono" style="font-weight:600">${fmt(order)}</td></tr>`;
               }).join('')}
-              <tr class="tot"><td>Total pieces to order</td><td></td>
-                <td class="mono">${fmt(hi.bigTokens+hi.smallTokens+hi.pfandPeakTotal)}</td>
-                <td></td>
-                <td class="mono">${fmt(Math.ceil(hi.bigTokens*(1+state.buffer/100))+Math.ceil(hi.smallTokens*(1+state.buffer/100))+Math.ceil(hi.pfandPeakTotal*(1+state.buffer/100)))}</td>
-              </tr>
+              <tr class="tot"><td>Total pieces</td><td></td>
+                <td class="mono">${fmt(hi.bigTokens+hi.smallTokens+hi.pfandPeak)}</td><td></td>
+                <td class="mono">${fmt(buf(hi.bigTokens)+buf(hi.smallTokens)+buf(hi.pfandPeak))}</td></tr>
             </tbody>
           </table>
-          <div class="note">Quantities are pieces of each physical token to print/buy, including the ${state.buffer}% safety buffer.</div>
+          <div class="fml">
+            <div class="row"><b>Big base</b><span><span class="eq">=</span> cash inflow × ${state.bigValueShare}% ÷ €2.00</span></div>
+            <div class="row"><b>Small base</b><span><span class="eq">=</span> cash inflow × ${100-state.bigValueShare}% ÷ €0.50</span></div>
+            <div class="row"><b>Pfand base</b><span><span class="eq">=</span> bottles × peak-in-flight% (${(rate('inflight')*100)|0}%)</span></div>
+            <div class="row"><b>Order qty</b><span><span class="eq">=</span> ⌈ base × (1 + ${state.buffer}%) ⌉</span></div>
+          </div>
+          <details class="what"><summary>What is this?</summary><div class="body">
+            <p>Cash collected converts into physical tokens — most value in Big, a slice in Small for change. Pfand is ordered against peak circulation, not total bottles: tokens cycle back through the Return Station and get reused, so you only need enough to cover the busiest single moment.</p>
+            <p>Order qty applies the ${state.buffer}% safety buffer and rounds up to whole pieces.</p>
+          </div></details>
         </div>
 
         <div class="sectitle">Final order — what to buy (max guests, ${state.buffer}% buffer)</div>
         <div class="concl">
-          ${[
-            ['Big tokens','pb','--big',Math.ceil(hi.bigTokens*(1+state.buffer/100)),'€2.00 each'],
-            ['Small tokens','ps','--small',Math.ceil(hi.smallTokens*(1+state.buffer/100)),'€0.50 each'],
-            ['Pfand tokens','pp','--pfand',Math.ceil(hi.pfandPeakTotal*(1+state.buffer/100)),'deposit'],
-          ].map(([nm,cls,cssvar,qty,sub])=>`
-            <div class="cwin" style="border-top:3px solid var(${cssvar})">
+          ${[['Big tokens','pb','--big',buf(hi.bigTokens),'€2.00 each'],
+             ['Small tokens','ps','--small',buf(hi.smallTokens),'€0.50 each'],
+             ['Pfand tokens','pp','--pfand',buf(hi.pfandPeak),'deposit']].map(([nm,cls,cv,qty,sub])=>`
+            <div class="cwin" style="border-top:3px solid var(${cv})">
               <div class="t"><span class="pill ${cls}"></span>${nm}</div>
-              <div class="v" style="color:var(${cssvar})">${fmt(qty)}</div>
+              <div class="v" style="color:var(${cv})">${fmt(qty)}</div>
               <div class="u">order qty · ${sub}</div>
             </div>`).join('')}
         </div>
@@ -283,18 +234,18 @@ function render(){
 
   $('#gMin').oninput=e=>{state.gMin=+e.target.value;if(state.gMin>state.gMax)state.gMax=state.gMin;render();};
   $('#gMax').oninput=e=>{state.gMax=+e.target.value;if(state.gMax<state.gMin)state.gMin=state.gMax;render();};
-  const bufEl=$('#buffer'); if(bufEl) bufEl.oninput=e=>{state.buffer=+e.target.value;render();};
+  $('#ipg').oninput=e=>{state.itemsPerGuest=+e.target.value;render();};
+  $('#bottleShare').oninput=e=>{state.bottleShare=+e.target.value;render();};
+  $('#bigValueShare').oninput=e=>{state.bigValueShare=+e.target.value;render();};
+  $('#buffer').oninput=e=>{state.buffer=+e.target.value;render();};
+  $('#avgPrice').onchange=e=>{state.avgPrice=+e.target.value||0;render();};
   document.querySelectorAll('[data-var]').forEach(b=>b.onclick=()=>{state.sc[b.dataset.var]=b.dataset.val;render();});
   document.querySelectorAll('[data-man]').forEach(inp=>inp.oninput=e=>{
     const k=e.target.dataset.man; state.manual[k]=+e.target.value;
-    const pos=e.target.selectionStart;
-    render();
+    const pos=e.target.selectionStart; render();
     const again=document.querySelector('[data-man="'+k+'"]');
     if(again){again.focus(); try{again.setSelectionRange(pos,pos);}catch(_){}}
   });
-  const ipgEl=$('#ipg'); if(ipgEl) ipgEl.oninput=e=>{state.itemsPerGuest=+e.target.value;render();};
-  const apEl=$('#avgPrice'); if(apEl) apEl.onchange=e=>{state.avgPrice=+e.target.value||0;render();};
-  document.querySelectorAll('[data-bar]').forEach(r=>r.oninput=e=>{state.bars[e.target.dataset.bar][e.target.dataset.prop]=+e.target.value;render();});
 }
 render();
 </script>
