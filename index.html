@@ -70,6 +70,11 @@
   .pb{background:var(--big)}.ps{background:var(--small)}.pp{background:var(--pfand)}
   tr.tot td{font-weight:600;border-top:2px solid var(--line);border-bottom:none}
   .sectitle{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:6px 0 12px}
+  .warn{color:var(--bad);font-size:12px;margin-top:2px;min-height:14px}
+  .ok{color:var(--good)}
+  .btn{display:inline-block;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 16px;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.5px}
+  .btn:hover{filter:brightness(1.1)}
   .concl{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   @media(max-width:760px){.concl{grid-template-columns:1fr}}
   .cwin{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
@@ -89,8 +94,57 @@ const state={
   buffer:15,
   avgPrice:4.53,
   itemsPerGuest:8,
-  bottleShare:70,   // single overall bottle-vs-cup %
   bigValueShare:85, // % of cash value dispensed as Big tokens (rest as Small)
+  // per-item relative weights (normalized on read; not required to sum to 100)
+  weights:{
+    'Water Grüneberger':10,'Apfelschorle':5,'Spezi Original':6,'Paulaner Spezi Zero':4,
+    'Proviant Cola':6,'Club Mate':10,'Kolle Mate':8,
+    'Clausthaler (alc-free)':3,'BRLO Naked (alc-free)':3,'Tegernseer Hell':7,
+    'Flensburger Pilsener':6,'Lübzer Radler Zitrone':5,'Lübzer Radler Grapefruit':4,
+    'Rosé (still)':4,'Red Pinot Noir':4,'Sekt Crémant':3,'Berliner Luft (shot)':2,
+    'Aperol Spritz':5,'Gin & Tonic':6,
+  },
+};
+// menu items by group. type: 'bottle' = ordered as bottles; cocktails handled separately
+const MENU={
+  softs:[
+    'Water Grüneberger','Apfelschorle','Spezi Original','Paulaner Spezi Zero',
+    'Proviant Cola','Club Mate','Kolle Mate'
+  ],
+  beer:[
+    'Clausthaler (alc-free)','BRLO Naked (alc-free)','Tegernseer Hell',
+    'Flensburger Pilsener','Lübzer Radler Zitrone','Lübzer Radler Grapefruit'
+  ],
+  wine:['Rosé (still)','Red Pinot Noir','Sekt Crémant','Berliner Luft (shot)'],
+  cocktails:['Aperol Spritz','Gin & Tonic'],
+};
+// cocktail recipes: ingredient -> litres per drink ; bottle size litres
+const RECIPE={
+  'Aperol Spritz':[['Aperol',0.06,0.7],['__cremant__',0.09,0.75],['Soda water',0.03,1.0]],
+  'Gin & Tonic':[['Gin',0.05,0.7],['Tonic water',0.20,0.2]],
+};
+const CREMANT_BOTTLE=0.75;  // L per Sekt Crémant bottle (also used for by-glass)
+// still wines poured by glass: 175ml restaurant pour ≈ 4 glasses per 0.75L bottle
+const WINE_BOTTLE=0.75, WINE_POUR=0.175;
+const STILL_WINE=new Set(['Rosé (still)','Red Pinot Noir']);
+// by-glass / cup-served drinks — these carry NO Pfand (no bottle handed to guest)
+const CUP_SERVED=new Set(['Rosé (still)','Red Pinot Noir','Sekt Crémant','Aperol Spritz','Gin & Tonic']);
+// bottles per crate (null -> unknown, left blank in output)
+const CRATE={
+  'Water Grüneberger':12,'Apfelschorle':24,'Spezi Original':20,'Paulaner Spezi Zero':20,
+  'Proviant Cola':24,'Club Mate':20,'Kolle Mate':20,
+  'Clausthaler (alc-free)':20,'BRLO Naked (alc-free)':24,'Tegernseer Hell':20,
+  'Flensburger Pilsener':20,'Lübzer Radler Zitrone':20,'Lübzer Radler Grapefruit':20,
+  'Rosé (still)':null,'Red Pinot Noir':null,'Sekt Crémant':null,'Berliner Luft (shot)':null,
+};
+// bottle / serving size in ml (null -> unknown, blank in output)
+const SIZE={
+  'Water Grüneberger':1000,'Apfelschorle':330,'Spezi Original':500,'Paulaner Spezi Zero':500,
+  'Proviant Cola':330,'Club Mate':500,'Kolle Mate':500,
+  'Clausthaler (alc-free)':500,'BRLO Naked (alc-free)':330,'Tegernseer Hell':500,
+  'Flensburger Pilsener':500,'Lübzer Radler Zitrone':500,'Lübzer Radler Grapefruit':500,
+  'Rosé (still)':750,'Red Pinot Noir':750,'Sekt Crémant':750,'Berliner Luft (shot)':null,
+  'Aperol':700,'Gin':700,'Soda water':1000,'Tonic water':200,
 };
 const VAL={
   ret:{good:0.95,avg:0.80,bad:0.60},
@@ -102,10 +156,17 @@ function rate(k){
 }
 const BIG=2.00,SMALL=0.50,PFANDV=1.00;
 
+function bottleFraction(){
+  const tw=totalWeight();
+  let cupW=0;
+  for(const n of CUP_SERVED) cupW += (+state.weights[n]||0);
+  return 1 - cupW/tw;   // share of drinks that are bottle-served (from menu, not a slider)
+}
+
 function compute(g){
   const inflight=rate('inflight');
   const drinks=state.itemsPerGuest*g;
-  const bottle=Math.round(drinks*state.bottleShare/100);
+  const bottle=Math.round(drinks*bottleFraction());
   const cup=drinks-bottle;
   const spend=drinks*state.avgPrice;            // cash inflow (no redemption gross-up)
   const pfandPeak=Math.ceil(bottle*inflight);   // tokens to own = peak in-flight
@@ -116,6 +177,62 @@ function compute(g){
 }
 const fmt=n=>Math.round(n).toLocaleString('de-DE');
 const eur=n=>'€'+Math.round(n).toLocaleString('de-DE');
+
+// Per-item order quantities at given guest count, with buffer applied.
+// Per-item weight (normalized) -> drinks per item -> bottles, or cocktail ingredients.
+function totalWeight(){
+  return Object.values(state.weights).reduce((a,b)=>a+(+b||0),0)||1;
+}
+function itemShare(name){ return (+state.weights[name]||0)/totalWeight(); }
+function menuOrder(g){
+  const totalDrinks=state.itemsPerGuest*g;
+  const bufMul=1+state.buffer/100;
+  const tw=totalWeight();
+  const bottleRows=[];
+  const ingredients={};
+  const cocktailSet=new Set(MENU.cocktails);
+  const byGlass=[];   // {name, servings} for served drinks
+  const CREMANT_POUR=0.15;        // L per by-glass serving of Sekt/wine
+  let cremantLitres=0;            // total Crémant litres (by-glass + Aperol sparkling)
+  let cremantGlassDrinks=0;
+  for(const grp of Object.keys(MENU)){
+    for(const name of MENU[grp]){
+      const drinks=totalDrinks*((+state.weights[name]||0)/tw);
+      if(name==='Sekt Crémant'){
+        cremantGlassDrinks=drinks;
+        cremantLitres+=drinks*CREMANT_POUR;   // by-glass servings -> litres
+        byGlass.push({name,servings:drinks});
+        continue;                              // handled after loop (merged line)
+      }
+      if(STILL_WINE.has(name)){
+        const bottles=Math.ceil((drinks*WINE_POUR/WINE_BOTTLE)*bufMul);
+        bottleRows.push({name,drinks,bottles,perCrate:null,crates:null});
+        byGlass.push({name,servings:drinks});
+        continue;
+      }
+      if(cocktailSet.has(name)){
+        byGlass.push({name,servings:drinks});
+        for(const [ing,litPer,bSize] of RECIPE[name]){
+          if(ing==='__cremant__'){ cremantLitres+=litPer*drinks; continue; }  // merge into Crémant
+          if(!ingredients[ing]) ingredients[ing]={litres:0,bottleSize:bSize};
+          ingredients[ing].litres+=litPer*drinks;
+        }
+      } else {
+        const perCrate=CRATE[name]||null;
+        const crates=perCrate?Math.ceil(Math.ceil(drinks*bufMul)/perCrate):null;
+        bottleRows.push({name,drinks,bottles:Math.ceil(drinks*bufMul),perCrate,crates});
+      }
+    }
+  }
+  // merged Sekt Crémant line: covers by-glass + Aperol sparkling, sized by litres / 0.75L bottle
+  const cremantBottles=Math.ceil((cremantLitres/CREMANT_BOTTLE)*bufMul);
+  bottleRows.push({name:'Sekt Crémant', drinks:cremantGlassDrinks, bottles:cremantBottles,
+                   perCrate:null, crates:null, note:'by-glass + Aperol base'});
+  const ingRows=Object.entries(ingredients).map(([ing,o])=>({
+    name:ing, litres:o.litres, bottles:Math.ceil((o.litres/o.bottleSize)*bufMul)
+  }));
+  return {totalDrinks,bottleRows,ingRows,byGlass};
+}
 
 function wh(text){
   return `<details class="what"><summary>What is this?</summary><div class="body"><p>${text}</p></div></details>`;
@@ -135,6 +252,8 @@ function segHTML(varKey){
 
 function render(){
   const lo=compute(state.gMin), hi=compute(state.gMax);
+  const mo=menuOrder(state.gMax);
+  const moLo=menuOrder(state.gMin);
   const buf=k=>Math.ceil(k*(1+state.buffer/100));
 
   root.innerHTML=`<div class="wrap">
@@ -158,12 +277,10 @@ function render(){
           ${wh('Average number of drinks one guest buys across the entire event (all days combined). Total drinks = items/guest × guests. This is the main demand lever — raise it and everything scales up.')}
           <div class="mix" style="margin-top:8px"><span>Avg item price €</span><input type="number" step="0.01" id="avgPrice" value="${state.avgPrice}"></div>
           ${wh('Average price of one menu item. Default €4.53 is the plain average of all 19 menu items at current prices. Drives cash inflow = drinks × this price.')}
-          <label class="field" style="margin-top:8px"><div class="lab"><span>Bottle drinks share</span><b>${state.bottleShare}%</b></div>
-            <input type="range" min="0" max="100" step="5" value="${state.bottleShare}" id="bottleShare"></label>
-          ${wh('Of all drinks sold, the share served in bottles (vs poured into cups). Only bottle drinks carry a Pfand deposit, so this sets how many Pfand tokens circulate.')}
           <label class="field" style="margin-top:8px"><div class="lab"><span>Value dispensed as Big tokens</span><b>${state.bigValueShare}%</b></div>
             <input type="range" min="50" max="100" step="5" value="${state.bigValueShare}" id="bigValueShare"></label>
           ${wh('How you hand out token value at the Info Desk: the share given as €2 Big tokens vs €0.50 Small tokens. More Big = fewer pieces to print but less change flexibility; more Small = easier change but many more pieces.')}
+          <div class="note" style="margin-top:8px">Bottle vs cup split is derived from the menu weights below — the 5 by-glass drinks (wines, Sekt, cocktails) carry no Pfand; everything else is a bottle. Currently <b>${Math.round(bottleFraction()*100)}%</b> bottle-served, so Pfand follows the actual menu.</div>
         </div>
 
         <div class="card">
@@ -179,6 +296,17 @@ function render(){
           <label class="field" style="margin-bottom:4px"><div class="lab"><span>Safety buffer on order qty</span><b>${state.buffer}%</b></div>
             <input type="range" min="0" max="50" step="1" value="${state.buffer}" id="buffer"></label>
           ${wh('Extra margin added on top of every calculated quantity before ordering — covers miscounts, damaged tokens, and demand running hotter than modelled. Applied to all three token types.')}
+        </div>
+
+        <div class="card">
+          <h2>Item popularity (relative weight)</h2>
+          ${[['softs','Softs · water · mate'],['beer','Beer · alc-free'],['wine','Wine · sparkling · shot'],['cocktails','Cocktails']].map(([grp,glabel])=>`
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:10px 0 6px">${glabel}</div>
+            ${MENU[grp].map(name=>`
+              <label class="field" style="margin-bottom:9px"><div class="lab"><span>${name}</span><b>${(itemShare(name)*100).toFixed(1)}%</b></div>
+                <input type="range" min="0" max="20" step="1" value="${state.weights[name]}" data-wt="${name.replace(/"/g,'&quot;')}"></label>`).join('')}
+          `).join('')}
+          ${wh('Relative popularity of each item — drag to set how much of total demand each drink takes. Weights need NOT sum to 100; the tool normalizes them, so the % shown is each item&rsquo;s real share. Raise water/mate, lower the slow movers. This drives the per-item order quantities below.')}
         </div>
       </div>
 
@@ -228,6 +356,51 @@ function render(){
               <div class="u">order qty · ${sub}</div>
             </div>`).join('')}
         </div>
+
+        <div class="sectitle">🍷 Predicted servings — by-glass drinks (guest range)</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Drink</th><th class="mono">Min (${state.gMin})</th><th class="mono">Max (${state.gMax})</th></tr></thead>
+            <tbody>
+              ${mo.byGlass.map((r,i)=>{
+                const lo=moLo.byGlass[i]?moLo.byGlass[i].servings:0;
+                return `<tr><td>${r.name}</td><td class="mono">${fmt(lo)}</td><td class="mono" style="font-weight:600">${fmt(r.servings)}</td></tr>`;
+              }).join('')}
+              <tr class="tot"><td>Total by-glass drinks</td>
+                <td class="mono">${fmt(moLo.byGlass.reduce((a,b)=>a+b.servings,0))}</td>
+                <td class="mono">${fmt(mo.byGlass.reduce((a,b)=>a+b.servings,0))}</td></tr>
+            </tbody>
+          </table>
+          <div class="note">Predicted servings = total drinks × each drink's popularity weight, across the guest range. These are servings to <b>sell</b>; the bottles/ingredients to <b>order</b> for them are in the Pau table below.</div>
+        </div>
+
+        <div class="sectitle">🍺 Beverage order for Pau — per item (max guests, ${state.buffer}% buffer)</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Item</th><th class="mono">Group</th><th class="mono">Size</th><th class="mono">Drinks</th><th class="mono">Bottles to order</th><th class="mono">Per crate</th><th class="mono">Crates</th></tr></thead>
+            <tbody>
+              ${(() => {
+                const grpOf={};
+                Object.keys(MENU).forEach(g=>MENU[g].forEach(n=>grpOf[n]=g));
+                const lbl={softs:'Softs',beer:'Beer',wine:'Wine',cocktails:'Cocktail'};
+                const tagOf=n=> n==='Berliner Luft (shot)' ? 'Shot' : lbl[grpOf[n]];
+                const sz=n=> SIZE[n]!=null ? (SIZE[n]>=1000?(SIZE[n]/1000)+' L':SIZE[n]+' ml') : '—';
+                let html=mo.bottleRows.map(r=>`<tr><td>${r.name}</td><td class="mono">${tagOf(r.name)}</td>
+                  <td class="mono">${sz(r.name)}</td>
+                  <td class="mono">${fmt(r.drinks)}</td><td class="mono" style="font-weight:600">${fmt(r.bottles)}</td>
+                  <td class="mono">${r.perCrate??'—'}</td><td class="mono" style="font-weight:600">${r.crates??'—'}</td></tr>`).join('');
+                html+=`<tr class="tot"><td colspan="7" style="color:var(--dim);font-weight:400;font-size:11px">Cocktail ingredients (converted from drink counts — ordered per bottle, not crate)</td></tr>`;
+                html+=mo.ingRows.map(r=>`<tr><td>${r.name}</td><td class="mono">Cocktail</td>
+                  <td class="mono">${sz(r.name)}</td>
+                  <td class="mono">${r.litres.toFixed(0)} L</td><td class="mono" style="font-weight:600">${fmt(r.bottles)}</td>
+                  <td class="mono">—</td><td class="mono">—</td></tr>`).join('');
+                return html;
+              })()}
+            </tbody>
+          </table>
+          <div class="note" style="margin-top:10px">Bottles to order is the primary figure (Pau prices per bottle). <b>Crates</b> are a reference, rounded up from bottles ÷ per-crate. Crate size is blank where unknown (Apfelschorle, wines, Berliner Luft) and not applicable to cocktail ingredients (poured per drink). Quantities include the ${state.buffer}% buffer.</div>
+          <div style="margin-top:14px"><button class="btn" id="exportPdf">⬇ Export order PDF for Pau</button></div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -235,7 +408,6 @@ function render(){
   $('#gMin').oninput=e=>{state.gMin=+e.target.value;if(state.gMin>state.gMax)state.gMax=state.gMin;render();};
   $('#gMax').oninput=e=>{state.gMax=+e.target.value;if(state.gMax<state.gMin)state.gMin=state.gMax;render();};
   $('#ipg').oninput=e=>{state.itemsPerGuest=+e.target.value;render();};
-  $('#bottleShare').oninput=e=>{state.bottleShare=+e.target.value;render();};
   $('#bigValueShare').oninput=e=>{state.bigValueShare=+e.target.value;render();};
   $('#buffer').oninput=e=>{state.buffer=+e.target.value;render();};
   $('#avgPrice').onchange=e=>{state.avgPrice=+e.target.value||0;render();};
@@ -246,6 +418,63 @@ function render(){
     const again=document.querySelector('[data-man="'+k+'"]');
     if(again){again.focus(); try{again.setSelectionRange(pos,pos);}catch(_){}}
   });
+  document.querySelectorAll('[data-wt]').forEach(s=>s.oninput=e=>{state.weights[e.target.dataset.wt]=+e.target.value;render();});
+  const exp=$('#exportPdf'); if(exp) exp.onclick=()=>window.exportPDF();
 }
 render();
+window.__menuOrder=()=>menuOrder(state.gMax);
+window.__MENU=MENU;
+window.__SIZE=SIZE;
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function exportPDF(){
+  if(!window.jspdf){alert('PDF library still loading — try again in a second.');return;}
+  const {jsPDF}=window.jspdf;
+  const d=new jsPDF({unit:'mm',format:'a4'});
+  const mo=window.__menuOrder();
+  const navy=[41,56,94];
+  let y=18;
+  d.setFont('helvetica','bold'); d.setFontSize(16); d.setTextColor(...navy);
+  d.text('DWeb Camp 2026 — Beverage Order',14,y); y+=6;
+  d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(110,110,110);
+  d.text('Bar Team (Sina & Karmel) · 8–12 July 2026 · for Pau (Alte Hölle drinks)',14,y); y+=5;
+  d.text('Quantities estimated at max guests incl. buffer. Please confirm availability & unit price.',14,y); y+=8;
+
+  function szTxt(name){const v=window.__SIZE[name]; return v==null?'—':(v>=1000?(v/1000)+' L':v+' ml');}
+  function header(){
+    d.setFillColor(...navy); d.rect(14,y-4,182,7,'F');
+    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(255,255,255);
+    d.text('Item',16,y); d.text('Group',80,y); d.text('Size',106,y); d.text('Bottles',128,y); d.text('Per crate',152,y); d.text('Crates',180,y); y+=6;
+    d.setTextColor(30,30,30); d.setFont('helvetica','normal');
+  }
+  header();
+  const grpOf={}; const M=window.__MENU; Object.keys(M).forEach(g=>M[g].forEach(n=>grpOf[n]=g));
+  const lbl={softs:'Softs',beer:'Beer',wine:'Wine',cocktails:'Cocktail'};
+  let i=0;
+  function row(name,group,bottles,perCrate,crates){
+    if(y>282){d.addPage();y=18;header();}
+    if(i%2===0){d.setFillColor(238,242,247); d.rect(14,y-4,182,6,'F');}
+    d.setTextColor(30,30,30); d.setFontSize(9); d.setFont('helvetica','normal');
+    d.text(String(name),16,y); d.text(String(group),80,y); d.text(szTxt(name),106,y);
+    d.setFont('helvetica','bold'); d.text(String(bottles),128,y); d.setFont('helvetica','normal');
+    d.text(perCrate==null?'—':String(perCrate),152,y);
+    d.setFont('helvetica','bold'); d.text(crates==null?'—':String(crates),180,y); d.setFont('helvetica','normal');
+    y+=6; i++;
+  }
+  mo.bottleRows.forEach(r=>row(r.name, r.name==='Berliner Luft (shot)'?'Shot':lbl[grpOf[r.name]], fmtN(r.bottles),r.perCrate,r.crates));
+  // cocktail ingredients
+  if(y>270){d.addPage();y=18;header();}
+  d.setFont('helvetica','italic'); d.setFontSize(8); d.setTextColor(110,110,110);
+  d.text('Cocktail ingredients (converted from drink counts — ordered per bottle, not crate):',16,y+1); y+=6;
+  d.setFont('helvetica','normal');
+  mo.ingRows.forEach(r=>row(r.name,'Cocktail',fmtN(r.bottles),null,null));
+
+  y+=4; d.setFontSize(8); d.setTextColor(110,110,110);
+  d.text('Bottles is the primary order figure (priced per bottle). Crates are reference only, blank where crate size is unknown.',14,y); y+=4;
+  d.text('Crémant may double as the Aperol sparkling base.',14,y);
+  d.save('DWeb_Beverage_Order_for_Pau.pdf');
+}
+function fmtN(n){return Math.round(n).toLocaleString('de-DE');}
 </script>
