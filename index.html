@@ -154,25 +154,28 @@ function rate(k){
   if(state.sc[k]==='man') return Math.min(100,Math.max(0,+state.manual[k]||0))/100;
   return VAL[k][state.sc[k]];
 }
-const BIG=2.00,SMALL=0.50,PFANDV=1.00;
+const BIG=2.00,SMALL=0.50,PFANDV=1.00;   // deposit = €1, its own dedicated Pfand token
 
+// bottle vs cup is only for ORDERING (how many bottles vs cups to buy).
+// Every served drink carries a €1 deposit, paid with one dedicated Pfand token.
 function bottleFraction(){
   const tw=totalWeight();
   let cupW=0;
   for(const n of CUP_SERVED) cupW += (+state.weights[n]||0);
-  return 1 - cupW/tw;   // share of drinks that are bottle-served (from menu, not a slider)
+  return 1 - cupW/tw;
 }
 
 function compute(g){
   const inflight=rate('inflight');
   const drinks=state.itemsPerGuest*g;
-  const bottle=Math.round(drinks*bottleFraction());
-  const cup=drinks-bottle;
-  const spend=drinks*state.avgPrice;            // cash inflow (no redemption gross-up)
-  const pfandPeak=Math.ceil(bottle*inflight);   // tokens to own = peak in-flight
+  const bottle=Math.round(drinks*bottleFraction());   // bottles to buy
+  const cup=drinks-bottle;                             // cups to buy
+  const spend=drinks*state.avgPrice;            // cash inflow (drink sales, no deposit)
+  // Pfand tokens to BUY = peak number in circulation at once (they cycle back and get reused).
+  const pfandPeak=Math.ceil(drinks*inflight);   // one dedicated €1 Pfand token per in-flight drink
   const bs=state.bigValueShare/100;
-  const bigTokens=Math.round(spend*bs/BIG);
-  const smallTokens=Math.round(spend*(1-bs)/SMALL);
+  const bigTokens=Math.round(spend*bs/BIG);     // Big tokens fund sales
+  const smallTokens=Math.round(spend*(1-bs)/SMALL); // Small tokens for change only
   return {drinks,bottle,cup,spend,pfandPeak,bigTokens,smallTokens};
 }
 const fmt=n=>Math.round(n).toLocaleString('de-DE');
@@ -258,7 +261,7 @@ function render(){
 
   root.innerHTML=`<div class="wrap">
     <h1>Token Order Simulator</h1>
-    <div class="sub">DWeb Camp 2026 · how many of each token to order — Big, Small, Pfand (all bars combined)</div>
+    <div class="sub">DWeb Camp 2026 · how many of each token to order — Big €2, Small €0.50 &amp; Pfand €1 deposit (all bars combined)</div>
     <div class="grid">
       <div>
         <div class="card">
@@ -280,15 +283,15 @@ function render(){
           <label class="field" style="margin-top:8px"><div class="lab"><span>Value dispensed as Big tokens</span><b>${state.bigValueShare}%</b></div>
             <input type="range" min="50" max="100" step="5" value="${state.bigValueShare}" id="bigValueShare"></label>
           ${wh('How you hand out token value at the Info Desk: the share given as €2 Big tokens vs €0.50 Small tokens. More Big = fewer pieces to print but less change flexibility; more Small = easier change but many more pieces.')}
-          <div class="note" style="margin-top:8px">Bottle vs cup split is derived from the menu weights below — the 5 by-glass drinks (wines, Sekt, cocktails) carry no Pfand; everything else is a bottle. Currently <b>${Math.round(bottleFraction()*100)}%</b> bottle-served, so Pfand follows the actual menu.</div>
+          <div class="note" style="margin-top:8px">Every served drink — bottle or cup — carries a €1 deposit, paid with one dedicated Pfand token and refunded at Return. The bottle vs cup split below (<b>${Math.round(bottleFraction()*100)}%</b> bottle) only sets how many bottles vs cups to buy.</div>
         </div>
 
         <div class="card">
           <h2>Scenario variables</h2>
           <div class="scrow"><div class="nm"><span>Pfand return rate</span><small>${(rate('ret')*100)|0}%</small></div>${segHTML('ret')}
-            ${wh('Share of sold bottles guests bring back for the €1 refund. Unreturned deposits stay unclaimed (a bonus you keep). Drives the small-token refund load at the Return Station; informational for the order.')}</div>
-          <div class="scrow"><div class="nm"><span>Peak bottles in-flight</span><small>${(rate('inflight')*100)|0}%</small></div>${segHTML('inflight')}
-            ${wh('At the single busiest moment, the fraction of all sold bottles that are out at once (bought, not yet returned). This sizes the Pfand order — you only need enough tokens to cover that peak, since they cycle back through the Return Station and get reused.')}</div>
+            ${wh('Share of served drinks (cups + bottles) guests bring back for the €1 refund. Unreturned deposits stay unclaimed (a bonus you keep). Informational for refund load; deposits use the dedicated €1 Pfand token.')}</div>
+          <div class="scrow"><div class="nm"><span>Peak drinks in-flight</span><small>${(rate('inflight')*100)|0}%</small></div>${segHTML('inflight')}
+            ${wh('At the single busiest moment, the fraction of all served drinks (cups + bottles) whose €1 deposit is out at once (paid, not yet refunded). Each ties up 2 Small tokens. This sizes how many Small tokens are reserved as live deposits — they cycle back through Return and get reused, so you only cover the peak.')}</div>
         </div>
 
         <div class="card">
@@ -313,8 +316,8 @@ function render(){
       <div>
         <div class="kpis">
           <div class="kpi"><div class="t">Cash inflow</div><div class="v">${eur(lo.spend)}–${eur(hi.spend)}</div><div class="u">= drinks × €${state.avgPrice.toFixed(2)}</div></div>
-          <div class="kpi"><div class="t">Drinks served</div><div class="v">${fmt(lo.drinks)}–${fmt(hi.drinks)}</div><div class="u">= ${state.itemsPerGuest} items × guests</div></div>
-          <div class="kpi"><div class="t">Bottles served</div><div class="v">${fmt(lo.bottle)}–${fmt(hi.bottle)}</div><div class="u">1 Pfand token handed out each</div></div>
+          <div class="kpi"><div class="t">Drinks served</div><div class="v">${fmt(lo.drinks)}–${fmt(hi.drinks)}</div><div class="u">each carries a €1 deposit</div></div>
+          <div class="kpi"><div class="t">Bottles to buy</div><div class="v">${fmt(lo.bottle)}–${fmt(hi.bottle)}</div><div class="u">rest served in cups</div></div>
         </div>
 
         <div class="sectitle">📦 Order list — what to buy (max guests, ${state.buffer}% buffer)</div>
@@ -322,7 +325,7 @@ function render(){
           <table>
             <thead><tr><th>Token</th><th class="mono">Unit</th><th class="mono">Base qty</th><th class="mono">+ Buffer</th><th class="mono">Order qty</th></tr></thead>
             <tbody>
-              ${[['Big','pb','€2.00',hi.bigTokens],['Small','ps','€0.50',hi.smallTokens],['Pfand','pp','deposit',hi.pfandPeak]].map(([nm,cls,unit,base])=>{
+              ${[['Big','pb','€2.00',hi.bigTokens],['Small','ps','€0.50',hi.smallTokens],['Pfand','pp','€1.00 deposit',hi.pfandPeak]].map(([nm,cls,unit,base])=>{
                 const b=base*state.buffer/100, order=Math.ceil(base+b);
                 return `<tr><td><span class="pill ${cls}"></span>${nm}</td><td class="mono">${unit}</td>
                   <td class="mono">${fmt(base)}</td><td class="mono" style="color:var(--dim)">+${fmt(b)}</td>
@@ -336,11 +339,11 @@ function render(){
           <div class="fml">
             <div class="row"><b>Big base</b><span><span class="eq">=</span> cash inflow × ${state.bigValueShare}% ÷ €2.00</span></div>
             <div class="row"><b>Small base</b><span><span class="eq">=</span> cash inflow × ${100-state.bigValueShare}% ÷ €0.50</span></div>
-            <div class="row"><b>Pfand base</b><span><span class="eq">=</span> bottles × peak-in-flight% (${(rate('inflight')*100)|0}%)</span></div>
+            <div class="row"><b>Pfand base</b><span><span class="eq">=</span> drinks × peak-in-flight% (${(rate('inflight')*100)|0}%)</span></div>
             <div class="row"><b>Order qty</b><span><span class="eq">=</span> ⌈ base × (1 + ${state.buffer}%) ⌉</span></div>
           </div>
           <details class="what"><summary>What is this?</summary><div class="body">
-            <p>Cash collected converts into physical tokens — most value in Big, a slice in Small for change. Pfand is ordered against peak circulation, not total bottles: tokens cycle back through the Return Station and get reused, so you only need enough to cover the busiest single moment.</p>
+            <p>Three token types to buy. <b>Big</b> (€2) and <b>Small</b> (€0.50) carry drink-purchase value; Big funds most of it, Small covers change. <b>Pfand</b> is a dedicated €1 deposit token — one is handed out per drink (cup or bottle) and reclaimed at Return. You only buy enough Pfand tokens to cover the peak number in circulation at once, since they cycle back through the Return Station and get reused.</p>
             <p>Order qty applies the ${state.buffer}% safety buffer and rounds up to whole pieces.</p>
           </div></details>
         </div>
@@ -349,7 +352,7 @@ function render(){
         <div class="concl">
           ${[['Big tokens','pb','--big',buf(hi.bigTokens),'€2.00 each'],
              ['Small tokens','ps','--small',buf(hi.smallTokens),'€0.50 each'],
-             ['Pfand tokens','pp','--pfand',buf(hi.pfandPeak),'deposit']].map(([nm,cls,cv,qty,sub])=>`
+             ['Pfand tokens','pp','--pfand',buf(hi.pfandPeak),'€1.00 deposit']].map(([nm,cls,cv,qty,sub])=>`
             <div class="cwin" style="border-top:3px solid var(${cv})">
               <div class="t"><span class="pill ${cls}"></span>${nm}</div>
               <div class="v" style="color:var(${cv})">${fmt(qty)}</div>
