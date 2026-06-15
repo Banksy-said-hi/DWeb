@@ -397,6 +397,8 @@ function render(){
                   <td class="mono">${sz(r.name)}</td>
                   <td class="mono">${r.litres.toFixed(0)} L</td><td class="mono" style="font-weight:600">${fmt(r.bottles)}</td>
                   <td class="mono">—</td><td class="mono">—</td></tr>`).join('');
+                const totalCrates=mo.bottleRows.reduce((a,r)=>a+(r.crates||0),0);
+                html+=`<tr class="tot"><td colspan="6" style="font-weight:600">Total crates (crate-tracked items)</td><td class="mono" style="font-weight:600">${fmt(totalCrates)}</td></tr>`;
                 return html;
               })()}
             </tbody>
@@ -438,45 +440,48 @@ function exportPDF(){
   const d=new jsPDF({unit:'mm',format:'a4'});
   const mo=window.__menuOrder();
   const navy=[41,56,94];
-  let y=18;
-  d.setFont('helvetica','bold'); d.setFontSize(16); d.setTextColor(...navy);
-  d.text('DWeb Camp 2026 — Beverage Order',14,y); y+=6;
-  d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(110,110,110);
-  d.text('Bar Team (Sina & Karmel) · 8–12 July 2026 · for Pau (Alte Hölle drinks)',14,y); y+=5;
-  d.text('Quantities estimated at max guests incl. buffer. Please confirm availability & unit price.',14,y); y+=8;
+  let y=20;
+  d.setFont('helvetica','bold'); d.setFontSize(18); d.setTextColor(...navy);
+  d.text('DWeb Beverage Order — for Pau',14,y); y+=10;
 
   function szTxt(name){const v=window.__SIZE[name]; return v==null?'—':(v>=1000?(v/1000)+' L':v+' ml');}
   function header(){
-    d.setFillColor(...navy); d.rect(14,y-4,182,7,'F');
-    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(255,255,255);
-    d.text('Item',16,y); d.text('Group',80,y); d.text('Size',106,y); d.text('Bottles',128,y); d.text('Per crate',152,y); d.text('Crates',180,y); y+=6;
+    d.setFillColor(...navy); d.rect(14,y-5,182,9,'F');
+    d.setFont('helvetica','bold'); d.setFontSize(11); d.setTextColor(255,255,255);
+    d.text('Item',16,y); d.text('Group',82,y); d.text('Size',110,y); d.text('Bottles',132,y); d.text('Per crate',154,y); d.text('Crates',182,y); y+=8;
     d.setTextColor(30,30,30); d.setFont('helvetica','normal');
   }
   header();
   const grpOf={}; const M=window.__MENU; Object.keys(M).forEach(g=>M[g].forEach(n=>grpOf[n]=g));
   const lbl={softs:'Softs',beer:'Beer',wine:'Wine',cocktails:'Cocktail'};
-  let i=0;
+  let i=0, totalCrates=0;
   function row(name,group,bottles,perCrate,crates){
-    if(y>282){d.addPage();y=18;header();}
-    if(i%2===0){d.setFillColor(238,242,247); d.rect(14,y-4,182,6,'F');}
-    d.setTextColor(30,30,30); d.setFontSize(9); d.setFont('helvetica','normal');
-    d.text(String(name),16,y); d.text(String(group),80,y); d.text(szTxt(name),106,y);
-    d.setFont('helvetica','bold'); d.text(String(bottles),128,y); d.setFont('helvetica','normal');
-    d.text(perCrate==null?'—':String(perCrate),152,y);
-    d.setFont('helvetica','bold'); d.text(crates==null?'—':String(crates),180,y); d.setFont('helvetica','normal');
-    y+=6; i++;
+    if(y>280){d.addPage();y=20;header();}
+    if(i%2===0){d.setFillColor(238,242,247); d.rect(14,y-5,182,7.5,'F');}
+    d.setTextColor(30,30,30); d.setFontSize(10.5); d.setFont('helvetica','normal');
+    d.text(String(name),16,y); d.text(String(group),82,y); d.text(szTxt(name),110,y);
+    d.setFont('helvetica','bold'); d.text(String(bottles),132,y); d.setFont('helvetica','normal');
+    d.text(perCrate==null?'—':String(perCrate),154,y);
+    d.setFont('helvetica','bold'); d.text(crates==null?'—':String(crates),182,y); d.setFont('helvetica','normal');
+    y+=7.5; i++;
   }
-  mo.bottleRows.forEach(r=>row(r.name, r.name==='Berliner Luft (shot)'?'Shot':lbl[grpOf[r.name]], fmtN(r.bottles),r.perCrate,r.crates));
+  mo.bottleRows.forEach(r=>{
+    row(r.name, r.name==='Berliner Luft (shot)'?'Shot':lbl[grpOf[r.name]], fmtN(r.bottles),r.perCrate,r.crates);
+    if(r.crates!=null) totalCrates+=r.crates;
+  });
   // cocktail ingredients
-  if(y>270){d.addPage();y=18;header();}
-  d.setFont('helvetica','italic'); d.setFontSize(8); d.setTextColor(110,110,110);
-  d.text('Cocktail ingredients (converted from drink counts — ordered per bottle, not crate):',16,y+1); y+=6;
+  if(y>272){d.addPage();y=20;header();}
+  d.setFont('helvetica','italic'); d.setFontSize(10); d.setTextColor(90,90,90);
+  d.text('Cocktail ingredients (per bottle, not crate):',16,y+1); y+=7.5;
   d.setFont('helvetica','normal');
   mo.ingRows.forEach(r=>row(r.name,'Cocktail',fmtN(r.bottles),null,null));
 
-  y+=4; d.setFontSize(8); d.setTextColor(110,110,110);
-  d.text('Bottles is the primary order figure (priced per bottle). Crates are reference only, blank where crate size is unknown.',14,y); y+=4;
-  d.text('Crémant may double as the Aperol sparkling base.',14,y);
+  // total crates summary row
+  y+=2;
+  d.setFillColor(...navy); d.rect(14,y-5,182,9,'F');
+  d.setFont('helvetica','bold'); d.setFontSize(11.5); d.setTextColor(255,255,255);
+  d.text('TOTAL CRATES (storage planning)',16,y);
+  d.text(String(totalCrates),182,y);
   d.save('DWeb_Beverage_Order_for_Pau.pdf');
 }
 function fmtN(n){return Math.round(n).toLocaleString('de-DE');}
